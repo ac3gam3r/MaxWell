@@ -13,9 +13,16 @@ const dbGet = promisify(docClient.get, docClient);
 const dbPut = promisify(docClient.put, docClient);
 const dbDelete = promisify(docClient.delete, docClient);
 
-const instructions = `Welcome to IRIS<break strength="medium" /> 
-                      You can say : My Book, Calendar, Research, Call Report.  What 
-                      would you like to do?`;
+// Twilio Credentials 
+var accountSid = 'ACebf68a8ce61533b1db5561c96ba7b9d1';
+var authToken = '720b83281e5ca6379599ba5d860a27b2';
+var fromNumber = '+12176144297';
+var sendingTo = '+19805855420';
+var https = require('https');
+var queryString = require('querystring');
+
+const instructions = `Welcome Srinath<break strength="medium" /> 
+                      How may I help you today?`;
 
 const handlers = {
 
@@ -173,28 +180,28 @@ const handlers = {
     // prompt for slot values and request a confirmation for each
 
     // CallReportName
-    if (!slots.CallReportName.value) {
-      const slotToElicit = 'CallReportName';
-      const speechOutput = 'What is the name of the Call Report?';
-      const repromptSpeech = 'Please tell me the name of the Call Report';
-      return this.emit(':elicitSlot', slotToElicit, speechOutput, repromptSpeech);
-    }
-    else if (slots.CallReportName.confirmationStatus !== 'CONFIRMED') {
+    // if (!slots.CallReportName.value) {
+    //   const slotToElicit = 'CallReportName';
+    //   const speechOutput = 'What is the name of the Call Report?';
+    //   const repromptSpeech = 'Please tell me the name of the Call Report';
+    //   return this.emit(':elicitSlot', slotToElicit, speechOutput, repromptSpeech);
+    // }
+    // else if (slots.CallReportName.confirmationStatus !== 'CONFIRMED') {
 
-      if (slots.CallReportName.confirmationStatus !== 'DENIED') {
-        // slot status: unconfirmed
-        const slotToConfirm = 'CallReportName';
-        const speechOutput = `The name of the call report is ${slots.CallReportName.value}, correct?`;
-        const repromptSpeech = speechOutput;
-        return this.emit(':confirmSlot', slotToConfirm, speechOutput, repromptSpeech);
-      }
+    //   if (slots.CallReportName.confirmationStatus !== 'DENIED') {
+    //     // slot status: unconfirmed
+    //     const slotToConfirm = 'CallReportName';
+    //     const speechOutput = `The name of the call report is ${slots.CallReportName.value}, correct?`;
+    //     const repromptSpeech = speechOutput;
+    //     return this.emit(':confirmSlot', slotToConfirm, speechOutput, repromptSpeech);
+    //   }
 
-      // slot status: denied -> reprompt for slot data
-      const slotToElicit = 'CallReportName';
-      const speechOutput = 'What is the name of the call report you would like to add?';
-      const repromptSpeech = 'Please tell me the name of the call report';
-      return this.emit(':elicitSlot', slotToElicit, speechOutput, repromptSpeech);
-    }
+    //   // slot status: denied -> reprompt for slot data
+    //   const slotToElicit = 'CallReportName';
+    //   const speechOutput = 'What is the name of the call report you would like to add?';
+    //   const repromptSpeech = 'Please tell me the name of the call report';
+    //   return this.emit(':elicitSlot', slotToElicit, speechOutput, repromptSpeech);
+    // }
 
     // CallReportDate
     // if (!slots.CallReportDate.value) {
@@ -247,26 +254,26 @@ const handlers = {
         // CallReportDetails
         if (!slots.CallReportDetails.value) {
             const slotToElicit = 'CallReportDetails';
-            const speechOutput = 'Tell me the details';
+            const speechOutput = 'Tell me the Call Report details';
             const repromptSpeech = 'Please tell me the details';
             return this.emit(':elicitSlot', slotToElicit, speechOutput, repromptSpeech);
           }
-          else if (slots.CallReportDetails.confirmationStatus !== 'CONFIRMED') {
+          // else if (slots.CallReportDetails.confirmationStatus !== 'CONFIRMED') {
       
-            if (slots.CallReportDetails.confirmationStatus !== 'DENIED') {
-              // slot status: unconfirmed
-              const slotToConfirm = 'CallReportDetails';
-              const speechOutput = `Please review ${slots.CallReportDetails.value}, Is this correct?`;
-              const repromptSpeech = speechOutput;
-              return this.emit(':confirmSlot', slotToConfirm, speechOutput, repromptSpeech);
-            }
+          //   if (slots.CallReportDetails.confirmationStatus !== 'DENIED') {
+          //     // slot status: unconfirmed
+          //     const slotToConfirm = 'CallReportDetails';
+          //     const speechOutput = `Please review ${slots.CallReportDetails.value}, Is this correct?`;
+          //     const repromptSpeech = speechOutput;
+          //     return this.emit(':confirmSlot', slotToConfirm, speechOutput, repromptSpeech);
+          //   }
       
-            // slot status: denied -> reprompt for slot data
-            const slotToElicit = 'CallReportDetails';
-            const speechOutput = 'Tell me the details';
-            const repromptSpeech = 'Please tell me the details';
-            return this.emit(':elicitSlot', slotToElicit, speechOutput, repromptSpeech);
-          }
+          //   // slot status: denied -> reprompt for slot data
+          //   const slotToElicit = 'CallReportDetails';
+          //   const speechOutput = 'Tell me the details';
+          //   const repromptSpeech = 'Please tell me the details';
+          //   return this.emit(':elicitSlot', slotToElicit, speechOutput, repromptSpeech);
+          // }
 
     // all slot values received and confirmed, now add the record to DynamoDB
 
@@ -279,7 +286,7 @@ const handlers = {
       TableName: recipesTable,
       Item: {
         Name: callReportName,
-        UserId: userId,
+    //    UserId: userId,
    //     Date: callReportDate,
      //   Attendees: callReportAttendees,
         Details: callReportDetails
@@ -289,38 +296,39 @@ const handlers = {
     const checkIfCallReportExistsParams = {
       TableName: recipesTable,
       Key: {
-        Name: callReportName,
-        UserId: userId
+        Name: callReportName
+        //UserId: userId
       }
     };
 
     console.log('Attempting to add Call Report', dynamoParams);
 
     // query DynamoDB to see if the item exists first
-    dbGet(checkIfCallReportExistsParams)
-      .then(data => {
-        console.log('Get item succeeded', data);
+    // dbGet(checkIfCallReportExistsParams)
+    //   .then(data => {
+    //     console.log('Get item succeeded', data);
 
-        const recipe = data.Item;
+    //     const recipe = data.Item;
 
-        if (recipe) {
-          const errorMsg = `Call Report ${callReportName} already exists!`;
-          this.emit(':tell', errorMsg);
-          throw new Error(errorMsg);
-        }
-        else {
+    //     if (recipe) {
+    //       const errorMsg = `Call Report ${callReportName} already exists!`;
+    //   //    this.emit(':tell', errorMsg);
+    //       throw new Error(errorMsg);
+    //     }
+    //     else {
           // no match, add the recipe
           return dbPut(dynamoParams);
-        }
-      })
-      .then(data => {
+   //     }
+    //  })
+   //   .then(data => {
         console.log('Add item succeeded', data);
 
-        this.emit(':tell', `Call Report ${callReportName} added!`);
-      })
-      .catch(err => {
-        console.error(err);
-      });
+     //   this.emit(':tell', `Call Report ${callReportName} added!`);
+        this.emit(':tell', `Call Report drafted !`);
+   //   })
+  //    .catch(err => {
+   //     console.error(err);
+   //   });
   },
 
 
@@ -387,6 +395,10 @@ const handlers = {
   'GetResearchIntent'(){
     this.emit(':tell', `Western Digital: 	Founded on April 23, 1970; 47 years ago, Headquarters: San jose,California, Revenue is 19.0 billion
     operating income is 1.954 billion`);
+  },  
+  'ConfirmEmailIntent'(){
+    this.emit(':tell', `Western Digital: 	Founded on April 23, 1970; 47 years ago, Headquarters: San jose,California, Revenue is 19.0 billion
+    operating income is 1.954 billion`);
   },
   'GetBookIntent'() {
     const { userId } = this.event.session.user;
@@ -415,7 +427,8 @@ const handlers = {
         });
         }
         else {
-          output = 'No Book information found!';
+       //   output = 'No Book information found!';
+       output += 'Number of Relationship 41. Outstanding Balance is $1567.27 million. Year to date Revenue is $44.75 million. Fee to Income Ratio is 78.3. Loan to Deposit Ratio is 15.0';
         }
 
         console.log('output', output);
@@ -524,7 +537,7 @@ const handlers = {
         });
         }
         else {
-          output = 'Here is your Calendar information, You have a meeting at 2:00 PM tomorrow with Geico in Chicago area />';
+          output = 'Here is your Calendar information, You have a meeting at 2:00 PM tomorrow with Geico in Chicago area.';
         }
 
         console.log('output', output);
@@ -539,14 +552,22 @@ const handlers = {
             if (slots.SendMail.confirmationStatus !== 'DENIED') {
               // slot status: unconfirmed
               const slotToConfirm = 'SendMail';
-              const speechOutput = `${output}, I have one more information. Based upon your meeting location, I found another client
-              ,Micron. Would you like to get the contact details?`;
+              const speechOutput = `${output}. I have one more information. Based upon your meeting location, I found another client
+              Micron. Would you like to get the contact details?`;
               const repromptSpeech = speechOutput;
+                  // Send an SMS message to the number provided in the event data.
+    // End the lambda function when the send function completes.
+    console.log('Text Details Sent');
+    console.log('Running SMS event');
+    SendSMS(sendingTo, 'Here is Micron Contact Details - +1(234)456-789', 
+    function (status) { context.done(null, status); });   
               return this.emit(':confirmSlot', slotToConfirm, speechOutput, repromptSpeech);
-              console.log('Meeting Booked with Micron');         
+            
+    
+       
             }
           }
-         this.emit(':tell', `Contact details sent`);
+         this.emit(':tell', `Contact details has been sent to your mobile`);
       })
       .catch(err => {
         console.error(err);
@@ -902,6 +923,66 @@ const handlers = {
     this.emit(':tell', 'Goodbye!');
   }
 };
+
+// Sends an SMS message using the Twilio API
+// to: Phone number to send to
+// body: Message body
+// completedCallback(status) : Callback with status message when the function completes.
+function SendSMS(to, body, completedCallback) {
+    
+  // The SMS message to send
+  var message = {
+      To: to, 
+      From: fromNumber,
+      Body: body
+  };
+  
+  var messageString = queryString.stringify(message);
+  
+  // Options and headers for the HTTP request   
+  var options = {
+      host: 'api.twilio.com',
+      port: 443,
+      path: '/2010-04-01/Accounts/' + accountSid + '/Messages.json',
+      method: 'POST',
+      headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                  'Content-Length': Buffer.byteLength(messageString),
+                  'Authorization': 'Basic ' + new Buffer(accountSid + ':' + authToken).toString('base64')
+               }
+  };
+  
+  // Setup the HTTP request
+  var req = https.request(options, function (res) {
+
+      res.setEncoding('utf-8');
+            
+      // Collect response data as it comes back.
+      var responseString = '';
+      res.on('data', function (data) {
+          responseString += data;
+      });
+      
+      // Log the responce received from Twilio.
+      // Or could use JSON.parse(responseString) here to get at individual properties.
+      res.on('end', function () {
+          console.log('Twilio Response: ' + responseString);
+          completedCallback('API request sent successfully.');
+      });
+  });
+  
+  // Handler for HTTP request errors.
+  req.on('error', function (e) {
+      console.error('HTTP error: ' + e.message);
+      completedCallback('API request completed with error(s).');
+  });
+  
+  // Send the HTTP request to the Twilio API.
+  // Log the message we are sending to Twilio.
+  console.log('Twilio API call: ' + messageString);
+  req.write(messageString);
+  req.end();
+}
 
 exports.handler = function handler(event, context) {
   shouldEndSession: false 
